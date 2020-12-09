@@ -11,6 +11,8 @@ FC_HOST="api.foundry.zorc:800"
 FC_LOGIN_PATH="/login"
 FC_LOGIN_URL="$FC_PROTOCOL$FC_HOST$FC_LOGIN_PATH"
 
+FC_REFRESH_EXPRIRY="29d"
+
 FC_REQUEST_HTTP_METHOD="-X POST"
 FC_REQUEST_PAYLOAD="-d '{\"username\": \"$FC_USERNAME\",\"password\": \"$FC_PASSWORD\"}'"
 
@@ -67,3 +69,25 @@ xset -dpms
 export DISPLAY=:0
 unclutter -idle 0.5 -root &
 /usr/bin/chromium-browser --noerrdialogs --disable-infobars --kiosk $FC_MONITORING_URL &
+
+while true
+do
+  echo "Refreshing Refresh Token..."
+  ACCESS_TOKEN=$(echo $CREDENTIALS | python3 -c "import sys, json; print(json.load(sys.stdin)['access'])" 2>&1)
+  REFRESH_TOKEN=$(echo $CREDENTIALS | python3 -c "import sys, json; print(json.load(sys.stdin)['refresh'])" 2>&1)
+
+  echo $ACCESS_TOKEN
+  echo $REFRESH_TOKEN
+    
+  FC_MONITORING_URL_PARAMETERS="accessToken=$ACCESS_TOKEN&refreshToken=$REFRESH_TOKEN&fullScreen=true&furnaces=$FURNACES"
+  FC_MONITORING_PATH="/monitoring/melt-shop/detailed-displays?$FC_MONITORING_URL_PARAMETERS"
+  FC_MONITORING_URL=$FC_PROTOCOL$FC_MONITORING_HOST$FC_MONITORING_PATH
+
+  xdotool key F11
+  xdotool key ctrl+l
+  xdotool type "$FC_MONITORING_URL"
+  xdotool key Return 
+  xdotool key F11
+  
+  sleep $FC_REFRESH_EXPRIRY
+done
